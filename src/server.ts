@@ -1,4 +1,5 @@
-import express, { Response } from "express";
+import express from "express";
+import { router } from "./routes/post.batidas";
 
 const PORT = 3000;
 
@@ -6,8 +7,6 @@ const app = express();
 
 app.use(express.json());
 
-app.get("/", (_, res: Response) => {
-  res.send("Hello, world!");
-});
+app.use(router);
 
 app.listen(PORT, () => console.log(`Server listening at ${PORT}`));
