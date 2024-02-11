@@ -1,16 +1,13 @@
 import { format } from "date-fns";
-import { TimePunchService } from "./service";
 import { HttpError } from "../../errors/http-error";
+import { injectable } from "tsyringe";
 
+@injectable()
 export class TimePunchPolicy {
-  constructor(private readonly timePunchService: TimePunchService) {}
-
   FORBIDDEN_DAYS = ["saturday", "sunday"]
 
-  async isLunchBreakMinimumReached(moment: Date) {
-    const tooRecent = await this.timePunchService.getOneFromHourAgo(moment);
-
-    if (tooRecent) {
+  async isLunchBreakMinimumReached(timePunchFromLessThanHourAgo?: Date) {
+    if (!!timePunchFromLessThanHourAgo) {
       throw new HttpError("Deve haver no mínimo 1 hora de almoço", 400);
     }
   }

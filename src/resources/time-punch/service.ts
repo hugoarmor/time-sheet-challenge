@@ -1,35 +1,48 @@
-import {endOfDay, startOfDay, subHours, subMinutes} from "date-fns";
-import { CreateTimePunchPayload, OptionsGetDailyPunches, TimePunchServiceContract } from "./service.contract";
+import { endOfDay, startOfDay, subHours, subMinutes } from "date-fns";
+import {
+  CreateTimePunchPayload,
+  OptionsGetDailyPunches,
+  TimePunchServiceContract,
+} from "./service.contract";
 import { PrismaClient } from "@prisma/client";
 import { TimePunchPolicy } from "./policy";
 import { HttpError } from "../../errors/http-error";
+import { inject, injectable, registry } from "tsyringe";
 
+@injectable()
 export class TimePunchService implements TimePunchServiceContract {
-  policies: TimePunchPolicy;
-
-  constructor(private readonly databaseService: PrismaClient, policies?: TimePunchPolicy) {
-    this.policies = policies || new TimePunchPolicy(this);
-  }
+  constructor(
+    @inject("PrismaClient") private readonly databaseService: PrismaClient,
+    @inject("TimePunchPolicy") private readonly policies: TimePunchPolicy
+  ) {}
 
   private TIME_PUNCHES_DAILY_LIMIT = 4;
 
   public async create(data: CreateTimePunchPayload) {
+    const timePunchFromLessThanHourAgo = await this.getOneFromHourAgo(
+      data.moment
+    );
+
+    await this.policies.isNotWeekendDay(data.moment);
+    await this.policies.isLunchBreakMinimumReached(
+      timePunchFromLessThanHourAgo?.moment
+    );
+
     const existingPunch = await this.findByMoment(data.moment);
 
     if (existingPunch) {
       throw new HttpError("Ponto já registrado", 409);
     }
 
-    await this.policies.isNotWeekendDay(data.moment);
-    await this.policies.isLunchBreakMinimumReached(data.moment);
-
     const dailyPunchesCount = await this.getDailyPunchesCount(data.moment);
 
     if (dailyPunchesCount >= this.TIME_PUNCHES_DAILY_LIMIT) {
-      throw new Error(`Já foram registrados ${this.TIME_PUNCHES_DAILY_LIMIT} pontos para este dia`);
+      throw new Error(
+        `Já foram registrados ${this.TIME_PUNCHES_DAILY_LIMIT} pontos para este dia`
+      );
     }
 
-    return this.databaseService.timePunch.create({ data })
+    return this.databaseService.timePunch.create({ data });
   }
 
   public async getOneFromHourAgo(moment: Date) {
@@ -75,5 +88,4 @@ export class TimePunchService implements TimePunchServiceContract {
       },
     });
   }
-
 }
