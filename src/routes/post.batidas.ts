@@ -1,7 +1,10 @@
 import { PrismaClient } from "@prisma/client";
 import { Router, Request, Response } from "express";
 import * as date from "date-fns";
+import { TimePunchService } from "../resources/time-punch/service";
+import { TimePunchPolicy } from "../resources/time-punch/policy";
 import { PostBatidasSerializer } from "../serializers/post-batidas";
+import { HttpError } from "../errors/http-error";
 
 const router = Router();
 
@@ -13,70 +16,30 @@ router.post("/v1/batidas", async (req: Request, res: Response) => {
   const { momento } = req.body as Payload;
 
   if (!momento) {
-    return res.json({
-      mensagem: "Variável 'momento' não está presente",
-    });
+    throw new HttpError("Campo obrigatório não informado", 400);
   }
 
-  const db = new PrismaClient();
+  const prismaClient = new PrismaClient();
+  const timePunchService = new TimePunchService(prismaClient);
 
   const dateObject = date.parseISO(momento);
   const yearMonth = date.format(dateObject, "yyyy-MM");
 
-  const existingPunch = await db.timePunch.findFirst({
-    where: {
-      moment: dateObject,
-    },
+  await timePunchService.create({
+    yearMonth,
+    moment: dateObject,
   });
 
-  if(!!existingPunch) {
-    return res.status(409).json({
-      mensagem: "Ponto já registrado",
-    });
-  }
-
-  const hasOneHourDifference = await db.timePunch.findFirst({
-    where: {
-      moment: {
-        gte: date.subHours(dateObject, 1),
-        lte: dateObject,
-      },
-    },
+  const dailyTimePunches = await timePunchService.getDailyPunches(dateObject, {
+    orderBy: "asc",
   });
 
-  if(!!hasOneHourDifference) {
-    return res.status(400).json({
-      mensagem: "Deve haver no mínimo 1 hora de almoço",
-    });
-  }
+  const serialized = new PostBatidasSerializer({
+    date: dateObject,
+    dailyTimePunches,
+  }).serialize();
 
-  await db.timePunch.create({
-    data: {
-      yearMonth,
-      moment: dateObject,
-    },
-  });
-
-  const momentDayPunches = await db.timePunch.findMany({
-    where: {
-      moment: {
-        gte: date.startOfDay(dateObject),
-        lte: date.endOfDay(dateObject),
-      },
-    },
-    orderBy: {
-      moment: "asc",
-    },
-  });
-
-  const pontos = momentDayPunches.map((punch) =>
-    date.format(punch.moment, "HH:mm:ss")
-  );
-
-  res.json({
-    dia: date.format(dateObject, "yyyy-MM-dd"),
-    pontos,
-  });
+  res.json(serialized);
 });
 
 export { router };
