@@ -3,9 +3,11 @@ import { HttpError } from "../../errors/http-error";
 import { TimePunchServiceContract } from "./service.contract";
 import { format, parseISO } from "date-fns";
 import { PostBatidasSerializer } from "../../serializers/post-batidas";
+import { inject, injectable } from "tsyringe";
 
+@injectable()
 export class TimePunchesController {
-  constructor(private readonly timePunchService: TimePunchServiceContract) {}
+  constructor(@inject("TimePunchService") private readonly timePunchService: TimePunchServiceContract) {}
 
   async create(req: Request, res: Response) {
     const { momento } = req.body as { momento: string };
