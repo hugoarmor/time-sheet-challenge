@@ -1,12 +1,26 @@
+import { TimePunch } from "@prisma/client";
 import { ObjectSerializer } from "../services/object_serializer";
+import { format } from "date-fns";
 
-export class PostBatidasSerializer extends ObjectSerializer<{
-  momento: string;
-  name: string;
-}> {
-  attributes = ["momento", "name"];
+type Payload = {
+  date: Date;
+  dailyTimePunches: TimePunch[];
+};
 
-  name() {
-    return "John Doe";
-  }
+type Result = {
+  dia: string;
+  pontos: string[];
+};
+
+type Attributes = keyof Result;
+
+export class PostBatidasSerializer extends ObjectSerializer<Payload, Result> {
+  attributes: Attributes[] = ["dia", "pontos"];
+  handlers = {
+    dia: () => format(this.obj.date, "yyyy-MM-dd"),
+    pontos: () =>
+      this.obj.dailyTimePunches.map((punch) =>
+        format(punch.moment, "HH:mm:ss")
+      ),
+  };
 }

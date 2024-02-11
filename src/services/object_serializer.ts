@@ -1,20 +1,21 @@
-export class ObjectSerializer<T> {
-  attributes: string[];
-  obj: any;
+export class ObjectSerializer<Payload, Result> {
+  attributes: (keyof Result)[];
+  handlers: Record<keyof Result, () => any>;
+  obj: Payload;
 
-  constructor(obj: any) {
+  constructor(obj: Payload) {
     this.obj = obj;
   }
 
-  public serialize(): T {
+  public serialize(): Result {
     const serialized: any = {};
 
     this.attributes.forEach((property) => {
       serialized[property] =
-        this[property as keyof ObjectSerializer<T>]?.call() ??
-        this.obj[property];
+        this.handlers[property]?.call(this) ??
+        this.obj[property as unknown as keyof Payload];
     });
 
-    return serialized as T;
+    return serialized as Result;
   }
 }
