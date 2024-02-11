@@ -1,3 +1,5 @@
+import "reflect-metadata";
+import "./dependency-injection";
 import express from "express";
 import { router } from "./routes/post.batidas";
 
