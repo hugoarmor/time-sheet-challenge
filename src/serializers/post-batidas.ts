@@ -1,5 +1,5 @@
 import { TimePunch } from "@prisma/client";
-import { ObjectSerializer } from "../services/object_serializer";
+import { ObjectSerializer } from "../services/object-serializer";
 import { format } from "date-fns";
 
 type Payload = {
