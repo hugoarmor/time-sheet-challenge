@@ -7,14 +7,14 @@ type Payload = {
   dailyTimePunches: TimePunch[];
 };
 
-type Result = {
+export type Result = {
   dia: string;
   pontos: string[];
 };
 
 type Attributes = keyof Result;
 
-export class PostBatidasSerializer extends ObjectSerializer<Payload, Result> {
+export class ExpedienteSerializer extends ObjectSerializer<Payload, Result> {
   attributes: Attributes[] = ["dia", "pontos"];
   handlers = {
     dia: () => format(this.obj.date, "yyyy-MM-dd"),
