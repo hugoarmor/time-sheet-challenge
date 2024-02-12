@@ -1,6 +1,6 @@
 export class ObjectSerializer<Payload, Result> {
   attributes: (keyof Result)[];
-  handlers: Record<keyof Result, () => any>;
+  handlers: any;
   obj: Payload;
 
   constructor(obj: Payload) {
