@@ -1,13 +1,22 @@
-import { endOfDay, startOfDay, subMinutes } from "date-fns";
+import {
+  endOfDay,
+  format,
+  parseISO,
+  startOfDay,
+  subMinutes,
+} from "date-fns";
 import {
   CreateTimePunchPayload,
   OptionsGetDailyPunches,
+  OptionsGetExpedientesByYearMonth,
   TimePunchServiceContract,
 } from "./service.contract";
-import { PrismaClient } from "@prisma/client";
+import { PrismaClient, TimePunch } from "@prisma/client";
 import { TimePunchPolicy } from "./policy";
 import { HttpError } from "../../errors/http-error";
-import { inject, injectable, registry } from "tsyringe";
+import { inject, injectable } from "tsyringe";
+import { ExpedienteSerializer } from "../../serializers/expediente";
+import { DateService } from "../../services/date";
 
 @injectable()
 export class TimePunchService implements TimePunchServiceContract {
@@ -56,7 +65,7 @@ export class TimePunchService implements TimePunchServiceContract {
     });
   }
 
-  public async getDailyPunches(day: Date, options: OptionsGetDailyPunches) {
+  public async getDailyPunches(day: Date, options?: OptionsGetDailyPunches) {
     return this.databaseService.timePunch.findMany({
       where: {
         moment: {
@@ -64,7 +73,7 @@ export class TimePunchService implements TimePunchServiceContract {
           lte: endOfDay(day),
         },
       },
-      orderBy: options.orderBy && {
+      orderBy: options?.orderBy && {
         moment: options.orderBy,
       },
     });
@@ -87,5 +96,69 @@ export class TimePunchService implements TimePunchServiceContract {
         moment,
       },
     });
+  }
+
+  public async getExpedientesByYearMonth(
+    yearMonth: string,
+    options?: OptionsGetExpedientesByYearMonth
+  ) {
+    const timePunches = await this.databaseService.timePunch.findMany({
+      where: {
+        yearMonth: yearMonth,
+      },
+      orderBy: options?.orderBy && {
+        moment: options.orderBy,
+      },
+    });
+
+    const dailyPunches = new Map<string, TimePunch[]>();
+
+    for (const punch of timePunches) {
+      const date = format(punch.moment, "yyyy-MM-dd");
+
+      const existingDailyPunches = dailyPunches.get(date) ?? [];
+
+      dailyPunches.set(date, [...existingDailyPunches, punch]);
+    }
+
+    const result = Array.from(dailyPunches).map(([date, punches]) =>
+      new ExpedienteSerializer({
+        dailyTimePunches: punches,
+        date: parseISO(date),
+      }).serialize()
+    );
+
+    return result;
+  }
+
+  public async getMonthlyDiagnose(yearMonth: string) {
+    const [year, month] = yearMonth.split("-").map(Number);
+
+    const weekdaysCount = DateService.countWeekdaysInMonth(year, month);
+
+    const requiredWorkSeconds = weekdaysCount * 8 * 3600;
+
+    const expedientes = await this.getExpedientesByYearMonth(yearMonth, {
+      orderBy: "asc",
+    });
+
+    let secondsWorked = 0;
+
+    for (const expediente of expedientes) {
+      const dailyPunches = expediente.pontos;
+
+      secondsWorked += DateService.getTotalSecondsWorked(dailyPunches);
+    }
+
+    const secondsExceeded = secondsWorked - requiredWorkSeconds;
+    const secondsInDebt = requiredWorkSeconds - secondsWorked;
+
+    return {
+      anoMes: yearMonth,
+      secondsWorked,
+      secondsExceeded,
+      secondsInDebt,
+      expedientes,
+    };
   }
 }
