@@ -12,8 +12,8 @@ export class ObjectSerializer<Payload, Result> {
 
     this.attributes.forEach((property) => {
       serialized[property] =
-        this.handlers[property]?.call(this) ??
-        this.obj[property as unknown as keyof Payload];
+        this.handlers?.[property]?.call(this) ??
+        this.obj?.[property as unknown as keyof Payload];
     });
 
     return serialized as Result;
