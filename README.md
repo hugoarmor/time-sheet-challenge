@@ -22,6 +22,10 @@ Also ensure to generate your prisma types:
 ```bash
 npx prisma generate
 ```
+and your database to be synced with the database schema:
+```bash
+npx prisma migrate deploy
+```
 
 ## Usage
 
