@@ -42,7 +42,7 @@ export class TimePunchesController {
       dailyTimePunches,
     }).serialize();
 
-    res.json(expediente);
+    res.status(201).json(expediente);
   }
 
   @Get("/v1/folhas-de-ponto/:yearMonth")
@@ -61,6 +61,6 @@ export class TimePunchesController {
       monthlyDiagnose
     ).serialize();
 
-    res.json(relatorio);
+    res.status(200).json(relatorio);
   }
 }
