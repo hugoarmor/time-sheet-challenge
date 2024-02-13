@@ -1,15 +1,12 @@
 import {
   differenceInHours,
-  differenceInMinutes,
   differenceInSeconds,
   eachDayOfInterval,
-  formatDuration,
-  formatISO,
+  format,
   isWeekend,
   parse,
   parseISO,
 } from "date-fns";
-import { HttpError } from "../errors/http-error";
 
 export class DateService {
   public static countWeekdaysInMonth(year: number, month: number) {
@@ -79,11 +76,11 @@ export class DateService {
   public static isValidISO(dateString: string) {
     try {
       const parsedDate = parseISO(dateString);
-      const formattedDate = formatISO(parsedDate, { representation: "complete" });
+      const formatted = format(parsedDate, "yyyy-MM-dd'T'HH:mm:ss");
 
-      return dateString === formattedDate;
-    } catch {
-      throw new HttpError("Data e hora em formato inválido", 400)
+      return formatted === dateString;
+    } catch(error) {
+      return false;
     }
   }
 }
