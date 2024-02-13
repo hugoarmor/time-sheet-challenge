@@ -1,16 +1,9 @@
-import { TimePunch } from "@prisma/client";
 import { ObjectSerializer } from "../services/object-serializer";
-import { format } from "date-fns";
 import * as ExpedienteSerializerModule from "./expediente";
 import { DateService } from "../services/date";
+import { MonthlyDiagnose } from "../resources/time-punch/service.contract";
 
-type Payload = {
-  anoMes: string;
-  secondsWorked: number;
-  secondsExceeded: number;
-  secondsInDebt: number;
-  expedientes: ExpedienteSerializerModule.Result[];
-};
+type Payload = MonthlyDiagnose;
 
 type Result = {
   anoMes: string;
@@ -31,6 +24,7 @@ export class RelatorioMensalSerializer extends ObjectSerializer<Payload, Result>
     "expedientes",
   ];
   handlers = {
+    anoMes: () => this.obj.yearMonth,
     horasTrabalhadas: () =>
       DateService.formatDurationToISO8601(
         DateService.formatSecondsToDuration(this.obj.secondsWorked)
