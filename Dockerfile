@@ -8,8 +8,10 @@ RUN yarn install
 
 COPY . .
 
-RUN npx prisma migrate deploy
+RUN echo 'DATABASE_URL="file:./db/sqlite.db"' >> .env
+
 RUN npx prisma generate
+RUN npx prisma migrate deploy
 
 RUN yarn build
 
