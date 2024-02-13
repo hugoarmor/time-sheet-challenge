@@ -3,14 +3,14 @@ import { container } from "tsyringe";
 import { handleError } from "../middlewares/error-handler";
 import { HttpError } from "../errors/http-error";
 
-type HttpRoute = {
+export type HttpRoute = {
   path: string;
   handler: string;
   method: "get" | "post";
   controller: string;
 };
 
-export const httpRoutes: HttpRoute[] = [];
+export let httpRoutes: HttpRoute[] = [];
 
 export function Get(path: string) {
   return function (target: any, key: string, descriptor: PropertyDescriptor) {
