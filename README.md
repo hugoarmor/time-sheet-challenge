@@ -17,6 +17,12 @@ To install the dependencies, run the following command:
 yarn install
 ```
 
+Also ensure to generate your prisma types:
+
+```bash
+npx prisma generate
+```
+
 ## Usage
 
 To start the server, first build the application:
