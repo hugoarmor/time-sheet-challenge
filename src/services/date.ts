@@ -27,7 +27,6 @@ export class DateService {
     const date2 = parse(time2, "HH:mm:ss", new Date());
 
     const difference = differenceInHours(date2, date1);
-    console.log(difference);
 
     return difference;
   }
