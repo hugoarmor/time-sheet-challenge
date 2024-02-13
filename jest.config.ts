@@ -10,6 +10,7 @@ const config: Config.InitialOptions = {
   coverageDirectory: 'coverage',
   collectCoverageFrom: ['src/**/*.{ts,js}', '!src/**/*.d.ts'],
   setupFiles: ['./jest.setup.ts'],
+  coveragePathIgnorePatterns: ['/node_modules/', '/__tests__/', 'src/dependency-injection.ts', 'src/server.ts'],
 };
 
 export default config;
