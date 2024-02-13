@@ -15,7 +15,7 @@ import { DateService } from "../../services/date";
 @injectable()
 export class TimePunchService implements TimePunchServiceContract {
   constructor(
-    @inject("PrismaClient") private readonly databaseService: PrismaClient,
+    @inject("PrismaClient") private readonly databaseService: PrismaClient
   ) {}
 
   public async create(data: CreateTimePunchPayload) {
@@ -23,12 +23,7 @@ export class TimePunchService implements TimePunchServiceContract {
       orderBy: "asc",
     });
 
-    const newMoments = dailyPunches
-      .map((d) => d.moment)
-      .concat(data.moment)
-
-    TimePunchPolicy.isNotWeekendDay(data.moment);
-    TimePunchPolicy.isLunchBreakMinimumReached(newMoments);
+    const newMoments = dailyPunches.map((d) => d.moment).concat(data.moment);
 
     const existingPunch = await this.findOne({
       moment: data.moment,
@@ -37,6 +32,9 @@ export class TimePunchService implements TimePunchServiceContract {
     if (existingPunch) {
       throw new HttpError("Ponto já registrado", 409);
     }
+
+    TimePunchPolicy.isNotWeekendDay(data.moment);
+    TimePunchPolicy.isLunchBreakMinimumReached(newMoments);
 
     if (dailyPunches.length >= TimePunchPolicy.TIME_PUNCHES_DAILY_LIMIT) {
       throw new Error(
