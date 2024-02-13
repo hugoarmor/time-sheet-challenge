@@ -6,6 +6,7 @@ import { ExpedienteSerializer } from "../../serializers/expediente";
 import { inject, injectable } from "tsyringe";
 import { Get, Post } from "../../services/routing";
 import { RelatorioMensalSerializer } from "../../serializers/relatorio-mensal";
+import { DateService } from "../../services/date";
 
 @injectable()
 export class TimePunchesController {
@@ -20,6 +21,10 @@ export class TimePunchesController {
 
     if (!momento) {
       throw new HttpError("Campo obrigatório não informado", 400);
+    }
+
+    if(!DateService.isValidISO(momento)) {
+      throw new HttpError("Data e hora em formato inválido", 400);
     }
 
     const dateObject = parseISO(momento);
